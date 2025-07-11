@@ -313,22 +313,27 @@ function viewMeeting(meetingId) {
 
 // Content analysis functions
 function getContentClass(text) {
-    const length = text ? text.length : 0;
-    if (length > 500) return 'content-extra-long';
-    if (length > 300) return 'content-long';
-    if (length > 150) return 'content-medium';
+    if (!text) return 'content-short';
+    const length = text.length;
+    if (length > 800) return 'content-extra-long';
+    if (length > 400) return 'content-long';
+    if (length > 200) return 'content-medium';
     return 'content-short';
 }
 
 function getColumnClass(columnData) {
-    const maxLength = Math.max(...columnData.map(text => text ? text.length : 0));
-    const avgLength = columnData.reduce((sum, text) => sum + (text ? text.length : 0), 0) / columnData.length;
+    if (!columnData || columnData.length === 0) return 'col-sm';
     
-    if (maxLength > 800 || avgLength > 400) return 'col-xxl';
+    const lengths = columnData.map(text => text ? text.length : 0);
+    const maxLength = Math.max(...lengths);
+    const avgLength = lengths.reduce((sum, len) => sum + len, 0) / lengths.length;
+    
+    // Adjust thresholds for better column sizing
+    if (maxLength > 1000 || avgLength > 500) return 'col-xxl';
     if (maxLength > 600 || avgLength > 300) return 'col-xl';
-    if (maxLength > 400 || avgLength > 200) return 'col-lg';
-    if (maxLength > 200 || avgLength > 100) return 'col-md';
-    if (maxLength > 100 || avgLength > 50) return 'col-sm';
+    if (maxLength > 300 || avgLength > 150) return 'col-lg';
+    if (maxLength > 150 || avgLength > 75) return 'col-md';
+    if (maxLength > 50 || avgLength > 25) return 'col-sm';
     return 'col-xs';
 }
 
@@ -434,32 +439,32 @@ function displayMeetingTable(data) {
                                 <tr style="animation-delay: ${index * 0.1}s;">
                                     <td class="${columnClasses[0]}">
                                         <div class="cell-content ${getContentClass(row.description)}" style="animation-delay: ${index * 0.1 + 0.1}s;">
-                                            ${row.description || '<span style="color: #cbd5e0; font-style: italic;">No description</span>'}
+                                            ${row.description && row.description.trim() ? row.description : '<span style="color: #cbd5e0; font-style: italic;">No description available</span>'}
                                         </div>
                                     </td>
                                     <td class="${columnClasses[1]}">
                                         <div class="cell-content ${getContentClass(row.actionItems)}" style="animation-delay: ${index * 0.1 + 0.2}s;">
-                                            ${row.actionItems || '<span style="color: #cbd5e0; font-style: italic;">No action items</span>'}
+                                            ${row.actionItems && row.actionItems.trim() ? row.actionItems : '<span style="color: #cbd5e0; font-style: italic;">No action items specified</span>'}
                                         </div>
                                     </td>
                                     <td class="${columnClasses[2]}">
                                         <div class="cell-content ${getContentClass(row.actionOwnership)}" style="animation-delay: ${index * 0.1 + 0.3}s;">
-                                            ${row.actionOwnership || '<span style="color: #cbd5e0; font-style: italic;">Unassigned</span>'}
+                                            ${row.actionOwnership && row.actionOwnership.trim() ? row.actionOwnership : '<span style="color: #cbd5e0; font-style: italic;">Unassigned</span>'}
                                         </div>
                                     </td>
                                     <td class="${columnClasses[3]}">
                                         <div class="cell-content content-short" style="animation-delay: ${index * 0.1 + 0.4}s;">
-                                            ${formatDate(row.startDate) || '<span style="color: #cbd5e0; font-style: italic;">No date</span>'}
+                                            ${formatDate(row.startDate) || '<span style="color: #cbd5e0; font-style: italic;">Not set</span>'}
                                         </div>
                                     </td>
                                     <td class="${columnClasses[4]}">
                                         <div class="cell-content content-short" style="animation-delay: ${index * 0.1 + 0.5}s;">
-                                            ${formatDate(row.endDate) || '<span style="color: #cbd5e0; font-style: italic;">No date</span>'}
+                                            ${formatDate(row.endDate) || '<span style="color: #cbd5e0; font-style: italic;">Not set</span>'}
                                         </div>
                                     </td>
                                     <td class="${columnClasses[5]}">
                                         <div class="cell-content ${getContentClass(row.remarks)}" style="animation-delay: ${index * 0.1 + 0.6}s;">
-                                            ${row.remarks || '<span style="color: #cbd5e0; font-style: italic;">No remarks</span>'}
+                                            ${row.remarks && row.remarks.trim() ? row.remarks : '<span style="color: #cbd5e0; font-style: italic;">No remarks</span>'}
                                         </div>
                                     </td>
                                 </tr>
@@ -561,36 +566,65 @@ function exportMeeting(meetingId) {
     showSpinner();
     
     setTimeout(() => {
-        // Create a detailed CSV export with the actual meeting data
-        const meeting = meetings.find(m => m.id === meetingId);
-        const meetingData = liveMeetingData[meetingId];
-        
-        if (meetingData) {
-            let csvContent = `"${meetingData.meeting.title || 'Minutes of Meeting'}"\n`;
-            csvContent += `"${meetingData.meeting.subtitle || ''}"\n`;
-            csvContent += `"${meetingData.meeting.description || ''}"\n\n`;
-            csvContent += `Description,Action Items,Action Ownership,Start Date,End Date,Remarks\n`;
+        try {
+            // Get the meeting data
+            const meetingData = liveMeetingData[meetingId];
             
+            if (!meetingData) {
+                showNotification('Meeting data not found for export', 'error');
+                hideSpinner();
+                return;
+            }
+            
+            // Create comprehensive CSV content
+            let csvContent = '';
+            
+            // Add header information
+            csvContent += `"${meetingData.meeting.title || 'Minutes of Meeting'}"\n`;
+            csvContent += `"${meetingData.meeting.subtitle || ''}"\n`;
+            if (meetingData.meeting.description) {
+                csvContent += `"${meetingData.meeting.description}"\n`;
+            }
+            csvContent += '\n';
+            
+            // Add column headers
+            csvContent += 'Description,Action Items,Action Ownership,Start Date,End Date,Remarks\n';
+            
+            // Add data rows
             meetingData.data.forEach(row => {
-                csvContent += `"${row.description}","${row.actionItems}","${row.actionOwnership}","${row.startDate}","${row.endDate}","${row.remarks}"\n`;
+                const description = (row.description || '').replace(/"/g, '""');
+                const actionItems = (row.actionItems || '').replace(/"/g, '""');
+                const actionOwnership = (row.actionOwnership || '').replace(/"/g, '""');
+                const startDate = row.startDate || '';
+                const endDate = row.endDate || '';
+                const remarks = (row.remarks || '').replace(/"/g, '""');
+                
+                csvContent += `"${description}","${actionItems}","${actionOwnership}","${startDate}","${endDate}","${remarks}"\n`;
             });
-        } else {
-            csvContent = `Description,Action Items,Action Ownership,Start Date,End Date,Remarks\n"No data available for export","","","","",""`;
+            
+            // Create and download the file
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `DPI_Strategy_Export_${new Date().toISOString().split('T')[0]}.csv`;
+            
+            // Append to body, click, and remove
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up
+            window.URL.revokeObjectURL(url);
+            
+            showNotification('Strategic planning data exported successfully!');
+        } catch (error) {
+            console.error('Export error:', error);
+            showNotification('Export failed. Please try again.', 'error');
         }
         
-        const blob = new Blob([csvContent], { type: 'text/csv' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `DPI_Strategy_Export_${meetingId}_${new Date().toISOString().split('T')[0]}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        
-        showNotification('Strategic planning data exported successfully!');
         hideSpinner();
-    }, 1500);
+    }, 1000);
 }
 
 function exportCurrentMeeting() {
@@ -620,16 +654,24 @@ function downloadTemplate() {
     showNotification('Demo template downloaded! In production, this would be an Excel template.');
 }
 
-// Notification function
+// Notification function with auto-hide and close button
 function showNotification(message, type = 'success') {
     const notification = document.getElementById('notification');
-    notification.textContent = message;
+    const notificationText = document.getElementById('notificationText');
+    
+    notificationText.textContent = message;
     notification.className = `notification ${type}`;
     notification.classList.add('show');
     
+    // Auto-hide after 6 seconds
     setTimeout(() => {
         notification.classList.remove('show');
-    }, 4000);
+    }, 6000);
+}
+
+function hideNotification() {
+    const notification = document.getElementById('notification');
+    notification.classList.remove('show');
 }
 
 // Close modal when clicking outside
