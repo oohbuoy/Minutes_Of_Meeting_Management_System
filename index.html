@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Netweb Technologies - MoM Management System</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="overlay"></div>
+    <div class="spinner" id="spinner"></div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="page-container login-container">
+        <div class="login-card">
+            <div class="logo-container">
+                <img src="https://via.placeholder.com/80x80/667eea/ffffff?text=NT" alt="Netweb Technologies" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                <span class="logo-fallback" style="display: none;">NT</span>
+            </div>
+            <h1 class="company-name">Netweb Technologies</h1>
+            <p class="subtitle">Minutes of Meeting Management System</p>
+            
+            <div class="role-selection">
+                <button class="role-btn" onclick="loginAs('guest')">
+                    <i class="fas fa-eye"></i> Browse as Guest
+                </button>
+                <button class="role-btn" onclick="showAdminForm()">
+                    <i class="fas fa-user-shield"></i> Login as Admin
+                </button>
+            </div>
+            
+            <div id="adminForm" class="admin-form">
+                <div class="form-group">
+                    <label for="adminPassword">Admin Password:</label>
+                    <input type="password" id="adminPassword" class="form-input" placeholder="Enter admin password">
+                </div>
+                <button class="role-btn" onclick="loginAs('admin')">
+                    <i class="fas fa-unlock"></i> Access Admin Panel
+                </button>
+            </div>
+
+            <div class="footer-info">
+                <div class="admin-contact">
+                    Need template or assistance? Contact Admin:<br>
+                    <a href="mailto:abhishek.patel@netwebindia.com">
+                        <i class="fas fa-envelope"></i> abhishek.patel@netwebindia.com
+                    </a>
+                </div>
+                <div class="made-in-india">
+                    <i class="fas fa-heart" style="color: #e53e3e;"></i>
+                    <span>Proudly Made in India</span>
+                    <i class="fas fa-flag" style="color: #ff6b35;"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="mainApp" class="page-container main-container">
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <div class="header-logo">
+                        <img src="https://via.placeholder.com/32x32/667eea/ffffff?text=NT" alt="NT" onerror="this.outerHTML='<div class=header-logo style=color:white;font-weight:bold;font-size:16px>NT</div>'">
+                    </div>
+                    <div>
+                        <h1 style="font-size: 20px; font-weight: 700; color: #2d3748;">Netweb Technologies</h1>
+                        <p style="font-size: 14px; color: #718096;">Minutes of Meeting Management</p>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600;" id="userRole">Guest</span>
+                    <button style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 14px; font-weight: 600;" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div class="controls">
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <button id="uploadBtn" class="btn" onclick="showUploadModal()" style="display: none;">
+                    <i class="fas fa-upload"></i> Upload Excel
+                </button>
+                <button id="exportBtn" class="btn btn-success" onclick="exportCurrentMeeting()" style="display: none;">
+                    <i class="fas fa-download"></i> Secure Export
+                </button>
+                <button class="btn" onclick="downloadTemplate()">
+                    <i class="fas fa-file-excel"></i> Download Template
+                </button>
+                <button class="btn" onclick="loadMeetings()">
+                    <i class="fas fa-refresh"></i> Refresh
+                </button>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div id="contentArea" class="meetings-container">
+            <!-- This will be populated by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Upload Modal -->
+    <div id="uploadModal" class="modal">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #e2e8f0;">
+                <h2 style="font-size: 24px; font-weight: 700; color: #2d3748;">Upload Excel File</h2>
+                <button style="background: none; border: none; font-size: 24px; cursor: pointer; color: #718096; padding: 4px;" onclick="closeUploadModal()">&times;</button>
+            </div>
+            
+            <div class="upload-area" id="uploadArea">
+                <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                <h3>Drop your Excel file here</h3>
+                <p>or click to browse</p>
+                <input type="file" id="fileInput" accept=".xlsx,.xls" style="display: none;" onchange="handleFileUpload(event)">
+            </div>
+            
+            <div style="margin-top: 24px;">
+                <p style="color: #718096; font-size: 14px;">
+                    <i class="fas fa-info-circle"></i> 
+                    Supported formats: .xlsx, .xls | Max size: 10MB<br>
+                    <strong>Note:</strong> File upload requires backend integration for processing.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
