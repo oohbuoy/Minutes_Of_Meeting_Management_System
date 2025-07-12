@@ -85,11 +85,32 @@ const liveMeetingData = {
 let currentUser = null;
 let currentMeetingId = null;
 let meetings = [];
+let isTableView = false;
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', function() {
     fadeInPage('loginScreen');
     loadMeetingsFromLive();
+    
+    // Setup upload area click handler
+    const uploadArea = document.getElementById('uploadArea');
+    if (uploadArea) {
+        uploadArea.addEventListener('click', () => {
+            if (currentUser === 'admin') {
+                document.getElementById('fileInput').click();
+            }
+        });
+    }
+    
+    // Close modal when clicking outside
+    const uploadModal = document.getElementById('uploadModal');
+    if (uploadModal) {
+        uploadModal.addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeUploadModal();
+            }
+        });
+    }
 });
 
 // Page transition functions
@@ -110,7 +131,7 @@ function hideSpinner() {
     document.getElementById('spinner').style.display = 'none';
 }
 
-function transitionToPage(fromId, toId) {
+function transitionToPage(fromId, toId, callback) {
     showSpinner();
     
     const fromPage = document.getElementById(fromId);
@@ -121,19 +142,33 @@ function transitionToPage(fromId, toId) {
         const toPage = document.getElementById(toId);
         toPage.style.display = fromId === 'loginScreen' ? 'block' : 'flex';
         
+        if (toId === 'mainApp') {
+            document.body.classList.add('app-mode');
+        } else {
+            document.body.classList.remove('app-mode');
+        }
+        
         setTimeout(() => {
             hideSpinner();
             fadeInPage(toId);
+            if (callback) callback();
         }, 300);
     }, 300);
 }
 
 // Authentication functions
+function handleEnterKey(event) {
+    if (event.key === 'Enter') {
+        loginAs('admin');
+    }
+}
+
 function showAdminForm() {
     const adminForm = document.getElementById('adminForm');
     adminForm.style.display = 'block';
     setTimeout(() => {
         adminForm.classList.add('show');
+        document.getElementById('adminPassword').focus();
     }, 10);
 }
 
@@ -147,9 +182,7 @@ function loginAs(role) {
     }
     
     currentUser = role;
-    transitionToPage('loginScreen', 'mainApp');
-    
-    setTimeout(() => {
+    transitionToPage('loginScreen', 'mainApp', () => {
         document.getElementById('userRole').textContent = role === 'admin' ? 'Administrator' : 'Guest';
         
         // Show/hide admin controls
@@ -158,21 +191,22 @@ function loginAs(role) {
             document.getElementById('exportBtn').style.display = 'flex';
         }
         
+        // Show only card grid, no auto-expand
         loadMeetings();
         showNotification(`Welcome ${role === 'admin' ? 'Administrator' : 'Guest'}! Access granted to Digital Public Infrastructure system.`);
-    }, 600);
+    });
 }
 
 function logout() {
     currentUser = null;
     currentMeetingId = null;
-    transitionToPage('mainApp', 'loginScreen');
+    isTableView = false;
     
-    setTimeout(() => {
+    transitionToPage('mainApp', 'loginScreen', () => {
         document.getElementById('adminForm').style.display = 'none';
         document.getElementById('adminForm').classList.remove('show');
         document.getElementById('adminPassword').value = '';
-    }, 600);
+    });
 }
 
 // Data functions
@@ -186,8 +220,10 @@ function loadMeetings() {
     setTimeout(() => {
         loadMeetingsFromLive();
         displayMeetings();
+        isTableView = false;
+        document.getElementById('backBtn').style.display = 'none';
         hideSpinner();
-    }, 800); // Simulate loading time
+    }, 800);
 }
 
 function displayMeetings() {
@@ -204,7 +240,7 @@ function displayMeetings() {
                         <button class="btn" onclick="showUploadModal()" style="margin-top: 24px; animation: slideUp 0.8s ease-out 0.5s both;">
                             <i class="fas fa-plus"></i> Upload Meeting
                         </button>
-                    ` : ''}
+                     ` : ''}
                 </div>
             </div>
         `;
@@ -218,15 +254,14 @@ function displayMeetings() {
                 Digital Public Infrastructure Repository
             </h2>
             <p style="color: #718096; font-size: 16px;">
-                ${meetings.length} strategic meeting${meetings.length !== 1 ? 's' : ''} • Netweb Technologies & Infosys Collaboration
+                ${meetings.length} strategic meeting${meetings.length !== 1 ? 's' : ''} • Netweb Technologies India Ltd. & Infosys Collaboration
             </p>
         </div>
         
         <div class="meetings-grid">
             ${meetings.map((meeting, index) => `
-                <div class="meeting-card-enhanced" style="animation-delay: ${index * 0.1}s;">
-                    <div class="meeting-card-glow"></div>
-                    <div class="meeting-card-header">
+                <div class="meeting-card-enhanced" style="animation-delay: ${index * 0.1}s;" onclick="viewMeeting('${meeting.id}')">
+                    <div class="meeting-card-header" onclick="event.stopPropagation(); toggleMeetingView('${meeting.id}')">
                         <div class="meeting-icon">
                             <i class="fas fa-network-wired"></i>
                         </div>
@@ -255,16 +290,16 @@ function displayMeetings() {
                     </div>
                     
                     <div class="meeting-actions">
-                        <button class="action-btn primary" onclick="viewMeeting('${meeting.id}')">
+                        <button class="action-btn primary" onclick="event.stopPropagation(); viewMeeting('${meeting.id}')">
                             <i class="fas fa-eye"></i>
                             <span>View Details</span>
                         </button>
                         ${currentUser === 'admin' ? `
-                        <button class="action-btn secondary" onclick="exportMeeting('${meeting.id}')">
+                        <button class="action-btn secondary" onclick="event.stopPropagation(); exportMeeting('${meeting.id}')">
                             <i class="fas fa-download"></i>
                             <span>Export Data</span>
                         </button>
-                        ` : ''}
+                         ` : ''}
                     </div>
                     
                     <div class="meeting-stats">
@@ -296,6 +331,14 @@ function displayMeetings() {
     `;
 }
 
+function toggleMeetingView(meetingId) {
+    if (isTableView && currentMeetingId === meetingId) {
+        backToDashboard();
+    } else {
+        viewMeeting(meetingId);
+    }
+}
+
 function viewMeeting(meetingId) {
     showSpinner();
     
@@ -304,63 +347,44 @@ function viewMeeting(meetingId) {
         if (data) {
             currentMeetingId = meetingId;
             displayMeetingTable(data);
+            isTableView = true;
+            document.getElementById('backBtn').style.display = 'flex';
         } else {
             showNotification('Meeting data not available', 'error');
         }
         hideSpinner();
-    }, 1000); // Simulate loading time
+    }, 1000);
 }
 
-// Content analysis functions
-function getContentClass(text) {
-    if (!text) return 'content-short';
-    const length = text.length;
-    if (length > 800) return 'content-extra-long';
-    if (length > 400) return 'content-long';
-    if (length > 200) return 'content-medium';
-    return 'content-short';
+function backToDashboard() {
+    showSpinner();
+    setTimeout(() => {
+        displayMeetings();
+        isTableView = false;
+        currentMeetingId = null;
+        document.getElementById('backBtn').style.display = 'none';
+        hideSpinner();
+        showNotification('Returned to dashboard');
+    }, 500);
 }
 
-function getColumnClass(columnData) {
-    if (!columnData || columnData.length === 0) return 'col-sm';
+// Text processing function to add line breaks after full stops
+function formatCellText(text) {
+    if (!text || typeof text !== 'string') return text;
     
-    const lengths = columnData.map(text => text ? text.length : 0);
-    const maxLength = Math.max(...lengths);
-    const avgLength = lengths.reduce((sum, len) => sum + len, 0) / lengths.length;
-    
-    // Adjust thresholds for better column sizing
-    if (maxLength > 1000 || avgLength > 500) return 'col-xxl';
-    if (maxLength > 600 || avgLength > 300) return 'col-xl';
-    if (maxLength > 300 || avgLength > 150) return 'col-lg';
-    if (maxLength > 150 || avgLength > 75) return 'col-md';
-    if (maxLength > 50 || avgLength > 25) return 'col-sm';
-    return 'col-xs';
-}
-
-function calculateOptimalLayout(data) {
-    const columns = [
-        data.map(row => row.description),
-        data.map(row => row.actionItems),
-        data.map(row => row.actionOwnership),
-        data.map(row => formatDate(row.startDate)),
-        data.map(row => formatDate(row.endDate)),
-        data.map(row => row.remarks)
-    ];
-    
-    return columns.map(columnData => getColumnClass(columnData));
+    // Add line breaks after full stops followed by a space and capital letter
+    return text.replace(/\. ([A-Z])/g, '.<br><br>$1')
+               .replace(/: ([A-Z])/g, ':<br>$1');
 }
 
 function displayMeetingTable(data) {
     const contentArea = document.getElementById('contentArea');
     
-    // Calculate optimal column classes
-    const columnClasses = calculateOptimalLayout(data.data);
-    
     // Show enhanced loading animation first
     contentArea.innerHTML = `
         <div class="table-wrapper">
             <div class="table-header">
-                <div>
+                <div onclick="backToDashboard()" style="cursor: pointer;">
                     <h2 style="font-size: 20px; font-weight: 700;">${data.meeting.title || 'Minutes of Meeting'}</h2>
                     <p style="font-size: 14px; opacity: 0.9;">${data.meeting.subtitle || data.meeting.filename} • ${new Date(data.meeting.upload_date).toLocaleDateString()}</p>
                 </div>
@@ -388,7 +412,7 @@ function displayMeetingTable(data) {
         const tableHTML = `
             <div class="table-wrapper">
                 <div class="table-header">
-                    <div>
+                    <div onclick="backToDashboard()" style="cursor: pointer;">
                         <h2 style="font-size: 20px; font-weight: 700;">${data.meeting.title || 'Minutes of Meeting'}</h2>
                         <p style="font-size: 14px; opacity: 0.9;">${data.meeting.subtitle || data.meeting.filename} • ${new Date(data.meeting.upload_date).toLocaleDateString()}</p>
                     </div>
@@ -400,35 +424,35 @@ function displayMeetingTable(data) {
                 
                 ${data.meeting.description ? `
                 <div style="background: rgba(255, 255, 255, 0.95); padding: 24px; border-bottom: 1px solid rgba(102, 126, 234, 0.1);">
-                    <p style="color: #4a5568; line-height: 1.7; font-size: 14px; margin: 0; text-align: justify;">${data.meeting.description}</p>
+                    <p style="color: #4a5568; line-height: 1.7; font-size: 14px; margin: 0; text-align: justify;">${formatCellText(data.meeting.description)}</p>
                 </div>
-                ` : ''}
+                 ` : ''}
                 
                 <div class="table-container-inner">
                     <table class="mom-table">
                         <thead>
                             <tr>
-                                <th class="${columnClasses[0]}">
+                                <th style="min-width: 300px;">
                                     <i class="fas fa-file-text" style="margin-right: 8px; color: #667eea;"></i>
                                     Description
                                 </th>
-                                <th class="${columnClasses[1]}">
+                                <th style="min-width: 250px;">
                                     <i class="fas fa-tasks" style="margin-right: 8px; color: #667eea;"></i>
                                     Action Items
                                 </th>
-                                <th class="${columnClasses[2]}">
+                                <th style="min-width: 150px;">
                                     <i class="fas fa-users" style="margin-right: 8px; color: #667eea;"></i>
                                     Action Ownership
                                 </th>
-                                <th class="${columnClasses[3]}">
+                                <th style="min-width: 120px;">
                                     <i class="fas fa-calendar-plus" style="margin-right: 8px; color: #667eea;"></i>
                                     Start Date
                                 </th>
-                                <th class="${columnClasses[4]}">
+                                <th style="min-width: 120px;">
                                     <i class="fas fa-calendar-check" style="margin-right: 8px; color: #667eea;"></i>
                                     End Date
                                 </th>
-                                <th class="${columnClasses[5]}">
+                                <th style="min-width: 200px;">
                                     <i class="fas fa-comment-alt" style="margin-right: 8px; color: #667eea;"></i>
                                     Remarks/Challenges
                                 </th>
@@ -437,34 +461,34 @@ function displayMeetingTable(data) {
                         <tbody>
                             ${data.data.map((row, index) => `
                                 <tr style="animation-delay: ${index * 0.1}s;">
-                                    <td class="${columnClasses[0]}">
-                                        <div class="cell-content ${getContentClass(row.description)}" style="animation-delay: ${index * 0.1 + 0.1}s;">
-                                            ${row.description && row.description.trim() ? row.description : '<span style="color: #cbd5e0; font-style: italic;">No description available</span>'}
+                                    <td>
+                                        <div class="cell-content" style="animation-delay: ${index * 0.1 + 0.1}s;">
+                                            ${formatCellText(row.description) || '<span style="color: #cbd5e0; font-style: italic;">No description available</span>'}
                                         </div>
                                     </td>
-                                    <td class="${columnClasses[1]}">
-                                        <div class="cell-content ${getContentClass(row.actionItems)}" style="animation-delay: ${index * 0.1 + 0.2}s;">
-                                            ${row.actionItems && row.actionItems.trim() ? row.actionItems : '<span style="color: #cbd5e0; font-style: italic;">No action items specified</span>'}
+                                    <td>
+                                        <div class="cell-content" style="animation-delay: ${index * 0.1 + 0.2}s;">
+                                            ${formatCellText(row.actionItems) || '<span style="color: #cbd5e0; font-style: italic;">No action items specified</span>'}
                                         </div>
                                     </td>
-                                    <td class="${columnClasses[2]}">
-                                        <div class="cell-content ${getContentClass(row.actionOwnership)}" style="animation-delay: ${index * 0.1 + 0.3}s;">
-                                            ${row.actionOwnership && row.actionOwnership.trim() ? row.actionOwnership : '<span style="color: #cbd5e0; font-style: italic;">Unassigned</span>'}
+                                    <td>
+                                        <div class="cell-content" style="animation-delay: ${index * 0.1 + 0.3}s;">
+                                            ${formatCellText(row.actionOwnership) || '<span style="color: #cbd5e0; font-style: italic;">Unassigned</span>'}
                                         </div>
                                     </td>
-                                    <td class="${columnClasses[3]}">
-                                        <div class="cell-content content-short" style="animation-delay: ${index * 0.1 + 0.4}s;">
+                                    <td>
+                                        <div class="cell-content" style="animation-delay: ${index * 0.1 + 0.4}s;">
                                             ${formatDate(row.startDate) || '<span style="color: #cbd5e0; font-style: italic;">Not set</span>'}
                                         </div>
                                     </td>
-                                    <td class="${columnClasses[4]}">
-                                        <div class="cell-content content-short" style="animation-delay: ${index * 0.1 + 0.5}s;">
+                                    <td>
+                                        <div class="cell-content" style="animation-delay: ${index * 0.1 + 0.5}s;">
                                             ${formatDate(row.endDate) || '<span style="color: #cbd5e0; font-style: italic;">Not set</span>'}
                                         </div>
                                     </td>
-                                    <td class="${columnClasses[5]}">
-                                        <div class="cell-content ${getContentClass(row.remarks)}" style="animation-delay: ${index * 0.1 + 0.6}s;">
-                                            ${row.remarks && row.remarks.trim() ? row.remarks : '<span style="color: #cbd5e0; font-style: italic;">No remarks</span>'}
+                                    <td>
+                                        <div class="cell-content" style="animation-delay: ${index * 0.1 + 0.6}s;">
+                                            ${formatCellText(row.remarks) || '<span style="color: #cbd5e0; font-style: italic;">No remarks</span>'}
                                         </div>
                                     </td>
                                 </tr>
@@ -475,12 +499,12 @@ function displayMeetingTable(data) {
             </div>
             
             <div style="margin-top: 24px; text-align: center; padding: 20px;">
-                <button class="btn" onclick="loadMeetings()" style="animation: slideUp 0.8s ease-out 1s both;">
+                <button class="btn" onclick="backToDashboard()" style="animation: slideUp 0.8s ease-out 1s both;">
                     <i class="fas fa-arrow-left"></i> Back to Meetings
                 </button>
                 <div style="margin-top: 16px; font-size: 12px; color: #718096; animation: fadeIn 1s ease-out 1.2s both;">
                     <i class="fas fa-info-circle"></i> 
-                    Table optimized for content • ${columnClasses.filter(c => c.includes('xl')).length} large columns detected • Strategic planning documentation
+                    Table optimized for content • Strategic planning documentation
                 </div>
             </div>
         `;
@@ -528,17 +552,6 @@ function closeUploadModal() {
     const modal = document.getElementById('uploadModal');
     modal.style.display = 'none';
 }
-
-document.addEventListener('DOMContentLoaded', function() {
-    const uploadArea = document.getElementById('uploadArea');
-    if (uploadArea) {
-        uploadArea.addEventListener('click', () => {
-            if (currentUser === 'admin') {
-                document.getElementById('fileInput').click();
-            }
-        });
-    }
-});
 
 function handleFileUpload(event) {
     if (currentUser !== 'admin') return;
@@ -673,15 +686,3 @@ function hideNotification() {
     const notification = document.getElementById('notification');
     notification.classList.remove('show');
 }
-
-// Close modal when clicking outside
-document.addEventListener('DOMContentLoaded', function() {
-    const uploadModal = document.getElementById('uploadModal');
-    if (uploadModal) {
-        uploadModal.addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeUploadModal();
-            }
-        });
-    }
-});

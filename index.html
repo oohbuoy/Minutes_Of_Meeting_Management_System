@@ -3,22 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Netweb Technologies - MoM Management System</title>
+    <title>Netweb Technologies India Ltd. - MoM Management System</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="overlay"></div>
-    <div class="spinner" id="spinner"></div>
+    <div class="spinner" id="spinner">
+        <div class="spinner-circle"></div>
+    </div>
 
     <!-- Login Screen -->
     <div id="loginScreen" class="page-container login-container">
         <div class="login-card">
-            <div class="logo-container">
-                <img src="https://via.placeholder.com/80x80/667eea/ffffff?text=NT" alt="Netweb Technologies" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <div class="logo-container logo-rect">
+                <img src="logo.png" alt="Netweb Technologies India Ltd." onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                 <span class="logo-fallback" style="display: none;">NT</span>
             </div>
-            <h1 class="company-name">Netweb Technologies</h1>
+            <h1 class="company-name">Netweb Technologies India Ltd.</h1>
             <p class="subtitle">Minutes of Meeting Management System</p>
             
             <div class="role-selection">
@@ -33,7 +35,7 @@
             <div id="adminForm" class="admin-form">
                 <div class="form-group">
                     <label for="adminPassword">Admin Password:</label>
-                    <input type="password" id="adminPassword" class="form-input" placeholder="Enter admin password">
+                    <input type="password" id="adminPassword" class="form-input" placeholder="Enter admin password" onkeydown="handleEnterKey(event)">
                 </div>
                 <button class="role-btn" onclick="loginAs('admin')">
                     <i class="fas fa-unlock"></i> Access Admin Panel
@@ -61,11 +63,11 @@
         <header class="header">
             <div class="header-content">
                 <div class="header-left">
-                    <div class="header-logo">
-                        <img src="https://via.placeholder.com/32x32/667eea/ffffff?text=NT" alt="NT" onerror="this.outerHTML='<div class=header-logo style=color:white;font-weight:bold;font-size:16px>NT</div>'">
+                    <div class="header-logo logo-rect">
+                        <img src="logo.png" alt="NT" onerror="this.outerHTML='<div class=&quot;header-logo logo-rect&quot; style=&quot;color:white;font-weight:bold;font-size:16px&quot;>NT</div>'">
                     </div>
                     <div>
-                        <h1 style="font-size: 20px; font-weight: 700; color: #2d3748;">Netweb Technologies</h1>
+                        <h1 style="font-size: 20px; font-weight: 700; color: #2d3748;">Netweb Technologies India Ltd.</h1>
                         <p style="font-size: 14px; color: #718096;">Minutes of Meeting Management</p>
                     </div>
                 </div>
@@ -91,6 +93,9 @@
                 </button>
                 <button class="btn" onclick="loadMeetings()">
                     <i class="fas fa-refresh"></i> Refresh
+                </button>
+                <button id="backBtn" class="btn btn-back" onclick="backToDashboard()" style="display: none;">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
                 </button>
             </div>
         </div>
