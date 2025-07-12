@@ -3,55 +3,54 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Netweb Technologies India Ltd. - Digital Public Infrastructure Strategy</title>
+    <title>Netweb Technologies - MoM Management System</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="overlay"></div>
-    <div class="spinner" id="spinner">
-        <div class="spinner-inner"></div>
-    </div>
+    <div class="spinner" id="spinner"></div>
 
     <!-- Login Screen -->
     <div id="loginScreen" class="page-container login-container">
         <div class="login-card">
             <div class="logo-container">
-                <img src="logo.png" alt="Netweb Technologies India Ltd." class="company-logo">
+                <img src="https://via.placeholder.com/80x80/667eea/ffffff?text=NT" alt="Netweb Technologies" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                <span class="logo-fallback" style="display: none;">NT</span>
             </div>
-            <h1 class="company-name">Netweb Technologies India Ltd.</h1>
-            <p class="subtitle">Digital Public Infrastructure Strategy Management</p>
+            <h1 class="company-name">Netweb Technologies</h1>
+            <p class="subtitle">Minutes of Meeting Management System</p>
             
             <div class="role-selection">
-                <button class="role-btn" onclick="loginAs('guest')" tabindex="1">
+                <button class="role-btn" onclick="loginAs('guest')">
                     <i class="fas fa-eye"></i> Browse as Guest
                 </button>
-                <button class="role-btn" onclick="showAdminForm()" tabindex="2">
-                    <i class="fas fa-user-shield"></i> Login as Administrator
+                <button class="role-btn" onclick="showAdminForm()">
+                    <i class="fas fa-user-shield"></i> Login as Admin
                 </button>
             </div>
             
             <div id="adminForm" class="admin-form">
                 <div class="form-group">
-                    <label for="adminPassword">Administrator Password:</label>
-                    <input type="password" id="adminPassword" class="form-input" placeholder="Enter administrator password" onkeypress="handlePasswordEnter(event)" tabindex="3">
+                    <label for="adminPassword">Admin Password:</label>
+                    <input type="password" id="adminPassword" class="form-input" placeholder="Enter admin password">
                 </div>
-                <button class="role-btn" onclick="loginAs('admin')" tabindex="4">
-                    <i class="fas fa-unlock"></i> Access Administrative Panel
+                <button class="role-btn" onclick="loginAs('admin')">
+                    <i class="fas fa-unlock"></i> Access Admin Panel
                 </button>
             </div>
 
             <div class="footer-info">
                 <div class="admin-contact">
-                    Need assistance? Contact Administrator:<br>
+                    Need template or assistance? Contact Admin:<br>
                     <a href="mailto:abhishek.patel@netwebindia.com">
                         <i class="fas fa-envelope"></i> abhishek.patel@netwebindia.com
                     </a>
                 </div>
                 <div class="made-in-india">
-                    <i class="fas fa-heart"></i>
+                    <i class="fas fa-heart" style="color: #e53e3e;"></i>
                     <span>Proudly Made in India</span>
-                    <i class="fas fa-flag"></i>
+                    <i class="fas fa-flag" style="color: #ff6b35;"></i>
                 </div>
             </div>
         </div>
@@ -63,16 +62,16 @@
             <div class="header-content">
                 <div class="header-left">
                     <div class="header-logo">
-                        <img src="logo.png" alt="Netweb Technologies India Ltd." class="header-logo-img">
+                        <img src="https://via.placeholder.com/32x32/667eea/ffffff?text=NT" alt="NT" onerror="this.outerHTML='<div class=header-logo style=color:white;font-weight:bold;font-size:16px>NT</div>'">
                     </div>
-                    <div class="header-text">
-                        <h1>Netweb Technologies India Ltd.</h1>
-                        <p>Digital Public Infrastructure Strategy Management</p>
+                    <div>
+                        <h1 style="font-size: 20px; font-weight: 700; color: #2d3748;">Netweb Technologies</h1>
+                        <p style="font-size: 14px; color: #718096;">Minutes of Meeting Management</p>
                     </div>
                 </div>
-                <div class="header-right">
-                    <span class="user-badge" id="userRole">Guest</span>
-                    <button class="logout-btn" onclick="logout()">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600;" id="userRole">Guest</span>
+                    <button style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: none; padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 14px; font-weight: 600;" onclick="logout()">
                         <i class="fas fa-sign-out-alt"></i> Logout
                     </button>
                 </div>
@@ -80,61 +79,34 @@
         </header>
 
         <div class="controls">
-            <div class="controls-left">
-                <button id="uploadBtn" class="btn btn-primary" onclick="showUploadModal()" style="display: none;">
+            <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                <button id="uploadBtn" class="btn" onclick="showUploadModal()" style="display: none;">
                     <i class="fas fa-upload"></i> Upload Excel
                 </button>
                 <button id="exportBtn" class="btn btn-success" onclick="exportCurrentMeeting()" style="display: none;">
                     <i class="fas fa-download"></i> Secure Export
                 </button>
-                <button class="btn btn-outline" onclick="downloadTemplate()">
+                <button class="btn" onclick="downloadTemplate()">
                     <i class="fas fa-file-excel"></i> Download Template
                 </button>
-            </div>
-            <div class="controls-right">
-                <button class="btn btn-outline" onclick="loadMeetings()" id="refreshBtn">
+                <button class="btn" onclick="loadMeetings()">
                     <i class="fas fa-refresh"></i> Refresh
                 </button>
             </div>
         </div>
 
-        <!-- Dashboard View -->
-        <div id="dashboardView" class="dashboard-container">
-            <div class="dashboard-header">
-                <h2><i class="fas fa-database"></i> Strategic Planning Repository</h2>
-                <p class="dashboard-subtitle">Digital Public Infrastructure initiatives • Netweb Technologies & Infosys Collaboration</p>
-            </div>
-            <div id="contentArea" class="meetings-container">
-                <!-- Meeting cards will be populated here -->
-            </div>
-        </div>
-
-        <!-- Detail View -->
-        <div id="detailView" class="detail-container" style="display: none;">
-            <div class="detail-header">
-                <button class="back-btn" onclick="goBackToDashboard()">
-                    <i class="fas fa-arrow-left"></i> Back to Strategic Dashboard
-                </button>
-                <div class="detail-actions">
-                    <button class="btn btn-success" onclick="exportCurrentMeeting()" id="detailExportBtn" style="display: none;">
-                        <i class="fas fa-download"></i> Export Data
-                    </button>
-                </div>
-            </div>
-            <div id="detailContent" class="detail-content">
-                <!-- Table content will be populated here -->
-            </div>
+        <!-- Content Area -->
+        <div id="contentArea" class="meetings-container">
+            <!-- This will be populated by JavaScript -->
         </div>
     </div>
 
     <!-- Upload Modal -->
     <div id="uploadModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h2>Upload Excel File</h2>
-                <button class="modal-close" onclick="closeUploadModal()">
-                    <i class="fas fa-times"></i>
-                </button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; padding-bottom: 16px; border-bottom: 2px solid #e2e8f0;">
+                <h2 style="font-size: 24px; font-weight: 700; color: #2d3748;">Upload Excel File</h2>
+                <button style="background: none; border: none; font-size: 24px; cursor: pointer; color: #718096; padding: 4px;" onclick="closeUploadModal()">&times;</button>
             </div>
             
             <div class="upload-area" id="uploadArea">
@@ -144,9 +116,12 @@
                 <input type="file" id="fileInput" accept=".xlsx,.xls" style="display: none;" onchange="handleFileUpload(event)">
             </div>
             
-            <div class="upload-info">
-                <p><i class="fas fa-info-circle"></i> Supported formats: .xlsx, .xls | Max size: 10MB</p>
-                <p><strong>Note:</strong> File upload requires backend integration for processing.</p>
+            <div style="margin-top: 24px;">
+                <p style="color: #718096; font-size: 14px;">
+                    <i class="fas fa-info-circle"></i> 
+                    Supported formats: .xlsx, .xls | Max size: 10MB<br>
+                    <strong>Note:</strong> File upload requires backend integration for processing.
+                </p>
             </div>
         </div>
     </div>
@@ -154,9 +129,7 @@
     <!-- Notification -->
     <div id="notification" class="notification">
         <span id="notificationText"></span>
-        <button onclick="hideNotification()" class="notification-close">
-            <i class="fas fa-times"></i>
-        </button>
+        <button onclick="hideNotification()" style="background: none; border: none; color: inherit; margin-left: 12px; cursor: pointer; font-size: 16px; opacity: 0.7;">&times;</button>
     </div>
 
     <script src="script.js"></script>
